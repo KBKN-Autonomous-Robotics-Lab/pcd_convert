@@ -10,5 +10,4 @@ pcdデータを回転＋高さ調整
 ros2 run pcd_convert pcd_rotation
 pcdデータを地面とOBS判定
 ros2 run pcd_convert pcd_height_segmentation
-bagデータ再生　shibafu\~のデータ
-ros2 bag play rosbag2_2024_09_28-05_16_56_0.db3
+
