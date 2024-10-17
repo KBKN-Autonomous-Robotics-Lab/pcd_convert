@@ -91,7 +91,7 @@ class PcdHeightSegmentation(Node):
         self.pcd_segment_obs_publisher.publish(self.pcd_segment_obs ) 
         self.pcd_segment_ground = point_cloud_intensity_msg(pcd_ground.T, t_stamp, 'map')
         self.pcd_segment_ground_publisher.publish(self.pcd_segment_ground )
-        self.get_logger().info(f"Publish pcd_segment_ground : {t_stamp}")
+        #self.get_logger().info("Publish pcd_segment_ground")
         
     def height_segment(self, pointcloud, height_min, height_max):
         pcd_ind = ((height_min <= pointcloud[2,:]) * (pointcloud[2,:] <= height_max ))

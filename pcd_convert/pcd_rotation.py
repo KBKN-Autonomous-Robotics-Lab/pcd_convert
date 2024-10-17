@@ -84,7 +84,7 @@ class PcdRotation(Node):
         # Publish for rviz2
         self.pcd_rotation = point_cloud_intensity_msg(pointcloud_intensity.T, t_stamp, 'map')
         self.pcd_rotation_publisher.publish(self.pcd_rotation )
-        self.get_logger().info(f"Publish pcd_rotation : {t_stamp}")
+        #self.get_logger().info("Publish pcd_rotation")
         
 def rotation_xyz(pointcloud, theta_x, theta_y, theta_z):
     rad_x = math.radians(theta_x)
