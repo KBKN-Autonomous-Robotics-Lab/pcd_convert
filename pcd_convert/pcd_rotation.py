@@ -38,7 +38,7 @@ class PcdRotation(Node):
         self.pcd_rotation_publisher = self.create_publisher(sensor_msgs.PointCloud2, 'pcd_rotation', qos_profile) #set publish pcd topic name
         
         #パラメータ
-        #set LiDAR position
+        # Set LiDAR position
         self.MID360_HIGHT = 980/1000; #hight position[m]
             
         #上下反転  LiDAR init
@@ -56,34 +56,35 @@ class PcdRotation(Node):
 
         # Combine into a 4xN matrix
         point_cloud_matrix = np.vstack((x, y, z, intensity))
-        print(point_cloud_matrix)
-        print(f"point_cloud_matrix ={point_cloud_matrix.shape}")
-        print(f"x ={x.dtype, x.shape}")
+        #print(point_cloud_matrix)
+        #print(f"point_cloud_matrix ={point_cloud_matrix.shape}")
+        #print(f"x ={x.dtype, x.shape}")
         
         return point_cloud_matrix
         
     def pcd_rotation(self, msg):
         
-        #print stamp message
+        # Print stamp message
         t_stamp = msg.header.stamp
-        print(f"t_stamp ={t_stamp}")
+        #print(f"t_stamp ={t_stamp}")
         
-        #get pcd data
+        # Get pcd data
         points = self.pointcloud2_to_array(msg)
-        print(f"points ={points.shape}")
-        #for pcd rotation
+        #print(f"points ={points.shape}")
+        # For pcd rotation
         xyz_point = np.vstack([points[0,:],points[1,:],points[2,:]])
-        print(f"xyz_point ={xyz_point.shape}")
+        #print(f"xyz_point ={xyz_point.shape}")
         pointcloud, rot_matrix = rotation_xyz(xyz_point, self.THETA_INIT_X, self.THETA_INIT_Y, self.THETA_INIT_Z)
-        #add intensity
+        # Add intensity
         pointcloud_intensity = np.insert(pointcloud, 3, points[3,:], axis=0)
-        #add mid height position
+        # Add mid height position
         pointcloud_intensity[2,:] += self.MID360_HIGHT
-        print(f"pointcloud_intensity ={pointcloud_intensity.shape}")
+        #print(f"pointcloud_intensity ={pointcloud_intensity.shape}")
         
-        #publish for rviz2
+        # Publish for rviz2
         self.pcd_rotation = point_cloud_intensity_msg(pointcloud_intensity.T, t_stamp, 'map')
-        self.pcd_rotation_publisher.publish(self.pcd_rotation ) 
+        self.pcd_rotation_publisher.publish(self.pcd_rotation )
+        #self.get_logger().info("Publish pcd_rotation")
         
 def rotation_xyz(pointcloud, theta_x, theta_y, theta_z):
     rad_x = math.radians(theta_x)
@@ -101,8 +102,8 @@ def rotation_xyz(pointcloud, theta_x, theta_y, theta_z):
                       [ math.sin(rad_z),  math.cos(rad_z), 0],
                       [               0,                0, 1]])
     rot_matrix = rot_z.dot(rot_y.dot(rot_x))
-    print(f"rot_matrix ={rot_matrix}")
-    print(f"pointcloud ={pointcloud.shape}")
+    #print(f"rot_matrix ={rot_matrix}")
+    #print(f"pointcloud ={pointcloud.shape}")
     rot_pointcloud = rot_matrix.dot(pointcloud)
     return rot_pointcloud, rot_matrix
 
