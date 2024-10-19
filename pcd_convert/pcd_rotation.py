@@ -46,6 +46,9 @@ class PcdRotation(Node):
         self.THETA_INIT_Y = 2.5 #[deg]
         self.THETA_INIT_Z = 0 #[deg]
         
+        self.get_logger().info("Start pcd height segmentation node")
+        self.get_logger().info("++++++++++++++++++++++++++++++++++")
+        
     def pointcloud2_to_array(self, cloud_msg):
         # Extract point cloud data
         points = np.frombuffer(cloud_msg.data, dtype=np.uint8).reshape(-1, cloud_msg.point_step)
@@ -82,7 +85,7 @@ class PcdRotation(Node):
         #print(f"pointcloud_intensity ={pointcloud_intensity.shape}")
         
         # Publish for rviz2
-        self.pcd_rotation = point_cloud_intensity_msg(pointcloud_intensity.T, t_stamp, 'map')
+        self.pcd_rotation = point_cloud_intensity_msg(pointcloud_intensity.T, t_stamp, '/livox_frame')
         self.pcd_rotation_publisher.publish(self.pcd_rotation )
         #self.get_logger().info("Publish pcd_rotation")
         

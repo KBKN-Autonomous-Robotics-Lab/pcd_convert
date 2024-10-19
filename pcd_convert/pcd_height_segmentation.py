@@ -50,6 +50,9 @@ class PcdHeightSegmentation(Node):
         self.GROUND_HIGHT_MIN = -150/1000; #hight range[m]
         self.GROUND_HIGHT_MAX =  150/1000; #hight range[m]
         
+        self.get_logger().info("Start pcd height segmentation node")
+        self.get_logger().info("++++++++++++++++++++++++++++++++++")
+        
     def pointcloud2_to_array(self, cloud_msg):
         # Extract point cloud data
         points = np.frombuffer(cloud_msg.data, dtype=np.uint8).reshape(-1, cloud_msg.point_step)
@@ -87,9 +90,9 @@ class PcdHeightSegmentation(Node):
         #print(f"pcd_ground ={pcd_ground.shape}")
         
         # Publish for rviz2
-        self.pcd_segment_obs = point_cloud_intensity_msg(pcd_obs.T, t_stamp, 'map')
+        self.pcd_segment_obs = point_cloud_intensity_msg(pcd_obs.T, t_stamp, '/livox_frame')
         self.pcd_segment_obs_publisher.publish(self.pcd_segment_obs ) 
-        self.pcd_segment_ground = point_cloud_intensity_msg(pcd_ground.T, t_stamp, 'map')
+        self.pcd_segment_ground = point_cloud_intensity_msg(pcd_ground.T, t_stamp, '/livox_frame')
         self.pcd_segment_ground_publisher.publish(self.pcd_segment_ground )
         #self.get_logger().info("Publish pcd_segment_ground")
         
