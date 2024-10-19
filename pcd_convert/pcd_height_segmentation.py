@@ -90,9 +90,9 @@ class PcdHeightSegmentation(Node):
         #print(f"pcd_ground ={pcd_ground.shape}")
         
         # Publish for rviz2
-        self.pcd_segment_obs = point_cloud_intensity_msg(pcd_obs.T, t_stamp, '/livox_frame')
+        self.pcd_segment_obs = point_cloud_intensity_msg(pcd_obs.T, t_stamp, 'livox_frame')
         self.pcd_segment_obs_publisher.publish(self.pcd_segment_obs ) 
-        self.pcd_segment_ground = point_cloud_intensity_msg(pcd_ground.T, t_stamp, '/livox_frame')
+        self.pcd_segment_ground = point_cloud_intensity_msg(pcd_ground.T, t_stamp, 'livox_frame')
         self.pcd_segment_ground_publisher.publish(self.pcd_segment_ground )
         #self.get_logger().info("Publish pcd_segment_ground")
         
