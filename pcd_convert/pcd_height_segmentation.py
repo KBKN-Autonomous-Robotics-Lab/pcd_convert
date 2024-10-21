@@ -96,7 +96,7 @@ class PcdHeightSegmentation(Node):
         
         #step segment
         pcd_step_height = self.height_segment(points, self.STEP_HIGHT_MIN, self.STEP_HIGHT_MAX)
-        pcd_step_height_under = self.height_segment(points, -self.STEP_HIGHT_MIN, -self.STEP_HIGHT_MAX)
+        pcd_step_height_under = self.height_segment(points, -self.STEP_HIGHT_MAX, -self.STEP_HIGHT_MIN)
         pcd_step_height = np.insert(pcd_step_height, len(pcd_step_height[0,:]), pcd_step_height_under.T, axis=1)
         pcd_step = self.pcd_serch(pcd_step_height, self.STEP_X_MIN, self.STEP_X_MAX, self.STEP_Y_MIN, self.STEP_Y_MAX)
         #pcd_obs = np.insert(pcd_obs, len(pcd_obs[0,:]), pcd_step.T, axis=1)
