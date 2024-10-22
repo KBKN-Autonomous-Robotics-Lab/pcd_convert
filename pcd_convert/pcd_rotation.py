@@ -39,24 +39,15 @@ class PcdRotation(Node):
         
         #パラメータ
         # Set LiDAR position
-        self.MID360_HIGHT = 0#980/1000; #hight position[m]
+        self.MID360_HIGHT = 980/1000; #hight position[m]
             
         #上下反転  LiDAR init
         self.THETA_INIT_X = 180 #[deg]
-        self.THETA_INIT_Y = 0 #[deg]
-        self.THETA_INIT_Z = 0 #[deg]
+        self.THETA_INIT_Y = 2.0 #[deg]
+        self.THETA_INIT_Z = 0.0 #[deg]
         
-        # Initialize calibration
-        self.initialize_calibration = 0
-        self.pcd_buff = np.array([[],[],[],[]]);
-        self.x1_init_point = 1.5
-        self.x2_init_point = 2.5
-        self.y_init_point = 0.0
-        self.x_range = 0.1
-        self.y_range = 0.3
-        
-        self.get_logger().info("Start pcd_rotation node")
-        self.get_logger().info("+++++++++++++++++++++++")
+        self.get_logger().info("Start pcd rotation node")
+        self.get_logger().info("++++++++++++++++++++++++++++++++++")
         
     def pointcloud2_to_array(self, cloud_msg):
         # Extract point cloud data
@@ -89,68 +80,14 @@ class PcdRotation(Node):
         pointcloud, rot_matrix = rotation_xyz(xyz_point, self.THETA_INIT_X, self.THETA_INIT_Y, self.THETA_INIT_Z)
         # Add intensity
         pointcloud_intensity = np.insert(pointcloud, 3, points[3,:], axis=0)
-        
-        if self.initialize_calibration == 0:
-            pcd_buff_len = 3* 2*10*4
-            self.pcd_buff = np.insert(self.pcd_buff, len(self.pcd_buff[0,:]), pointcloud_intensity.T, axis=1)
-            print(f"len(self.pcd_buff), {self.pcd_buff.shape}")
-            if (len(self.pcd_buff[0,:]) > pcd_buff_len):
-                #self.pcd_buff = self.pcd_buff[:,(len(self.pcd_buff[0,:])-pcd_buff_len):len(self.pcd_buff[0,:])]
-                x1_min = self.x1_init_point - self.x_range;
-                x1_max = self.x1_init_point + self.x_range;
-                x2_min = self.x2_init_point - self.x_range;
-                x2_max = self.x2_init_point + self.x_range;
-                y_min = self.y_init_point  - self.y_range;
-                y_max = self.y_init_point  + self.y_range;
-                #print(f"x1_min,x1_max,x2_min,x2_max,y_min,y_max ={ x1_min, x1_max, x2_min, x2_max, y_min, y_max}")
-                pcd_x1_ind = self.pcd_serch(self.pcd_buff, x1_min, x1_max, y_min, y_max)
-                pcd_x2_ind = self.pcd_serch(self.pcd_buff, x2_min, x2_max, y_min, y_max)
-                #print(f"len(self.pcd_buff[0,pcd_x1_ind]), {len(self.pcd_buff[0,pcd_x1_ind])}")
-                #print(f"len(self.pcd_buff[0,pcd_x2_ind]), {len(self.pcd_buff[0,pcd_x2_ind])}")
-                if len(self.pcd_buff[0,pcd_x1_ind]) & len(self.pcd_buff[0,pcd_x2_ind]) > 0:
-                    pcd_x1 = self.pcd_buff[:,pcd_x1_ind]
-                    pcd_x2 = self.pcd_buff[:,pcd_x2_ind]
-                    #pcd_x1_closest_ind = np.abs(pcd_x1[0,:] - self.x1_init_point).argmin()
-                    z1_median = np.median(pcd_x1[2,:])
-                    pcd_x1_closest_ind = np.abs(pcd_x1[2,:]-z1_median).argmin()
-                    #pcd_x2_closest_ind = np.abs(pcd_x2[0,:] - self.x2_init_point).argmin()
-                    z2_median = np.median(pcd_x2[2,:])
-                    pcd_x2_closest_ind = np.abs(pcd_x2[2,:]-z2_median).argmin()
-                    #z= {slope}x + intercept
-                    slope = (pcd_x2[2,pcd_x2_closest_ind] - pcd_x1[2,pcd_x1_closest_ind]) / (pcd_x2[0,pcd_x2_closest_ind] - pcd_x1[0,pcd_x1_closest_ind])
-                    intercept = pcd_x1[2,pcd_x1_closest_ind] - slope*pcd_x1[0,pcd_x1_closest_ind]
-                    
-                    
-                    #print(f"pcd_x1 x,y,z ={pcd_x1[0,pcd_x1_closest_ind], pcd_x1[1,pcd_x1_closest_ind], pcd_x1[2,pcd_x1_closest_ind]}")
-                    #print(f"pcd_x2 x,y,z ={pcd_x2[0,pcd_x2_closest_ind], pcd_x2[1,pcd_x2_closest_ind], pcd_x2[2,pcd_x2_closest_ind]}")
-                    delta_x = pcd_x2[0,pcd_x2_closest_ind] - 0
-                    delta_z = - (intercept - pcd_x2[2,pcd_x2_closest_ind]) 
-                    theta = np.arctan2(delta_z, delta_x) /math.pi*180
-                    #print(f"delta_x ={delta_x}")
-                    #print(f"delta_z ={delta_z}")
-                    #print(f"slope ={slope}")
-                    #print(f"intercept ={intercept}")
-                    #print(f"theta ={theta}")
-                    self.MID360_HIGHT = - intercept; #hight position[m]
-                    self.THETA_INIT_Y = self.THETA_INIT_Y + theta #[deg]
-                    self.initialize_calibration = 1
-                    #print(f"self.MID360_HIGHT ={self.MID360_HIGHT}")
-                    
-        
         # Add mid height position
         pointcloud_intensity[2,:] += self.MID360_HIGHT
         #print(f"pointcloud_intensity ={pointcloud_intensity.shape}")
         
         # Publish for rviz2
-        if self.initialize_calibration == 1:
-            self.pcd_rotation = point_cloud_intensity_msg(pointcloud_intensity.T, t_stamp, 'map')
-            self.pcd_rotation_publisher.publish(self.pcd_rotation ) 
-        
-    def pcd_serch(self, pointcloud, x_min, x_max, y_min, y_max):
-        pcd_ind_x = ((x_min <= pointcloud[0,:]) * (pointcloud[0,:] <= x_max )) 
-        pcd_ind_y = ((y_min <= pointcloud[1,:]) * (pointcloud[1,:] <= y_max ))
-        pcd_ind = pcd_ind_x * pcd_ind_y
-        return pcd_ind
+        self.pcd_rotation = point_cloud_intensity_msg(pointcloud_intensity.T, t_stamp, 'livox_frame')
+        self.pcd_rotation_publisher.publish(self.pcd_rotation )
+        #self.get_logger().info("Publish pcd_rotation")
         
 def rotation_xyz(pointcloud, theta_x, theta_y, theta_z):
     rad_x = math.radians(theta_x)

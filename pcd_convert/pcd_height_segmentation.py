@@ -37,28 +37,20 @@ class PcdHeightSegmentation(Node):
         # Publisherを作成
         self.pcd_segment_obs_publisher = self.create_publisher(sensor_msgs.PointCloud2, 'pcd_segment_obs', qos_profile) #set publish pcd topic name
         self.pcd_segment_ground_publisher = self.create_publisher(sensor_msgs.PointCloud2, 'pcd_segment_ground', qos_profile) #set publish pcd topic name
-        self.pcd_segment_step_publisher = self.create_publisher(sensor_msgs.PointCloud2, 'pcd_segment_step', qos_profile) #set publish pcd topic name
         
         #パラメータ
         # Set obs range
         self.OBS_HIGHT_MIN =   200/1000; #hight range[m]
         self.OBS_HIGHT_MAX =  3000/1000; #hight range[m]
-        self.OBS_MASK_X_MIN = -500/1000; #x mask range[m]
+        self.OBS_MASK_X_MIN = -600/1000; #x mask range[m]
         self.OBS_MASK_X_MAX =  200/1000; #x mask range[m]
-        self.OBS_MASK_Y_MIN = -350/1000; #y mask range[m]
-        self.OBS_MASK_Y_MAX =  350/1000; #y mask range[m]
-        # Set ground range
+        self.OBS_MASK_Y_MIN = -400/1000; #y mask range[m]
+        self.OBS_MASK_Y_MAX =  400/1000; #y mask range[m]
+        #set ground range
         self.GROUND_HIGHT_MIN = -150/1000; #hight range[m]
         self.GROUND_HIGHT_MAX =  150/1000; #hight range[m]
-        # Set step range
-        self.STEP_HIGHT_MIN =   100/1000; #hight range[m]
-        self.STEP_HIGHT_MAX =   self.OBS_HIGHT_MIN# 200/1000; #hight range[m]
-        self.STEP_X_MIN     = -2000/1000; #x mask range[m]
-        self.STEP_X_MAX     =  5000/1000; #x mask range[m]
-        self.STEP_Y_MIN     = -8000/1000; #y mask range[m]
-        self.STEP_Y_MAX     =  8000/1000; #y mask range[m]
         
-        self.get_logger().info("Start pcd_height_segmentation node")
+        self.get_logger().info("Start pcd height segmentation node")
         self.get_logger().info("++++++++++++++++++++++++++++++++++")
         
     def pointcloud2_to_array(self, cloud_msg):
@@ -97,20 +89,12 @@ class PcdHeightSegmentation(Node):
         pcd_ground = self.height_segment(points, self.GROUND_HIGHT_MIN, self.GROUND_HIGHT_MAX)
         #print(f"pcd_ground ={pcd_ground.shape}")
         
-        # Step segment
-        pcd_step_height = self.height_segment(points, self.STEP_HIGHT_MIN, self.STEP_HIGHT_MAX)
-        pcd_step_height_under = self.height_segment(points, -self.STEP_HIGHT_MAX, -self.STEP_HIGHT_MIN)
-        pcd_step_height = np.insert(pcd_step_height, len(pcd_step_height[0,:]), pcd_step_height_under.T, axis=1)
-        pcd_step = self.pcd_serch(pcd_step_height, self.STEP_X_MIN, self.STEP_X_MAX, self.STEP_Y_MIN, self.STEP_Y_MAX)
-        #pcd_obs = np.insert(pcd_obs, len(pcd_obs[0,:]), pcd_step.T, axis=1)
-        
         # Publish for rviz2
-        self.pcd_segment_obs = point_cloud_intensity_msg(pcd_obs.T, t_stamp, 'map')
+        self.pcd_segment_obs = point_cloud_intensity_msg(pcd_obs.T, t_stamp, 'livox_frame')
         self.pcd_segment_obs_publisher.publish(self.pcd_segment_obs ) 
-        self.pcd_segment_ground = point_cloud_intensity_msg(pcd_ground.T, t_stamp, 'map')
-        self.pcd_segment_ground_publisher.publish(self.pcd_segment_ground ) 
-        self.pcd_segment_step = point_cloud_intensity_msg(pcd_step.T, t_stamp, 'map')
-        self.pcd_segment_step_publisher.publish(self.pcd_segment_step ) 
+        self.pcd_segment_ground = point_cloud_intensity_msg(pcd_ground.T, t_stamp, 'livox_frame')
+        self.pcd_segment_ground_publisher.publish(self.pcd_segment_ground )
+        #self.get_logger().info("Publish pcd_segment_ground")
         
     def height_segment(self, pointcloud, height_min, height_max):
         pcd_ind = ((height_min <= pointcloud[2,:]) * (pointcloud[2,:] <= height_max ))
@@ -122,10 +106,6 @@ class PcdHeightSegmentation(Node):
         pcd_mask = pointcloud[:, ~pcd_ind]
         return pcd_mask
         
-    def pcd_serch(self, pointcloud, x_min, x_max, y_min, y_max):
-        pcd_ind = (( (x_min <= pointcloud[0,:]) * (pointcloud[0,:] <= x_max)) * ((y_min <= pointcloud[1,:]) * (pointcloud[1,:]) <= y_max ) )
-        pcd_mask = pointcloud[:, pcd_ind]
-        return pcd_mask
         
 
 def point_cloud_intensity_msg(points, t_stamp, parent_frame):
