@@ -38,7 +38,7 @@ class PcdRotation(Node):
         self.pcd_rotation_publisher = self.create_publisher(sensor_msgs.PointCloud2, 'pcd_rotation', qos_profile) #set publish pcd topic name
         
         #パラメータ
-        #set LiDAR position
+        # Set LiDAR position
         self.MID360_HIGHT = 0#980/1000; #hight position[m]
             
         #上下反転  LiDAR init
@@ -46,7 +46,7 @@ class PcdRotation(Node):
         self.THETA_INIT_Y = 0 #[deg]
         self.THETA_INIT_Z = 0 #[deg]
         
-        #initialize calibration
+        # Initialize calibration
         self.initialize_calibration = 0
         self.pcd_buff = np.array([[],[],[],[]]);
         self.x1_init_point = 1.5
@@ -55,7 +55,8 @@ class PcdRotation(Node):
         self.x_range = 0.1
         self.y_range = 0.3
         
-        
+        self.get_logger().info("Start pcd_rotation node")
+        self.get_logger().info("+++++++++++++++++++++++")
         
     def pointcloud2_to_array(self, cloud_msg):
         # Extract point cloud data
@@ -75,18 +76,18 @@ class PcdRotation(Node):
         
     def pcd_rotation(self, msg):
         
-        #print stamp message
+        # Print stamp message
         t_stamp = msg.header.stamp
         #print(f"t_stamp ={t_stamp}")
         
-        #get pcd data
+        # Get pcd data
         points = self.pointcloud2_to_array(msg)
         #print(f"points ={points.shape}")
-        #for pcd rotation
+        # For pcd rotation
         xyz_point = np.vstack([points[0,:],points[1,:],points[2,:]])
         #print(f"xyz_point ={xyz_point.shape}")
         pointcloud, rot_matrix = rotation_xyz(xyz_point, self.THETA_INIT_X, self.THETA_INIT_Y, self.THETA_INIT_Z)
-        #add intensity
+        # Add intensity
         pointcloud_intensity = np.insert(pointcloud, 3, points[3,:], axis=0)
         
         if self.initialize_calibration == 0:
@@ -120,27 +121,27 @@ class PcdRotation(Node):
                     intercept = pcd_x1[2,pcd_x1_closest_ind] - slope*pcd_x1[0,pcd_x1_closest_ind]
                     
                     
-                    print(f"pcd_x1 x,y,z ={pcd_x1[0,pcd_x1_closest_ind], pcd_x1[1,pcd_x1_closest_ind], pcd_x1[2,pcd_x1_closest_ind]}")
-                    print(f"pcd_x2 x,y,z ={pcd_x2[0,pcd_x2_closest_ind], pcd_x2[1,pcd_x2_closest_ind], pcd_x2[2,pcd_x2_closest_ind]}")
+                    #print(f"pcd_x1 x,y,z ={pcd_x1[0,pcd_x1_closest_ind], pcd_x1[1,pcd_x1_closest_ind], pcd_x1[2,pcd_x1_closest_ind]}")
+                    #print(f"pcd_x2 x,y,z ={pcd_x2[0,pcd_x2_closest_ind], pcd_x2[1,pcd_x2_closest_ind], pcd_x2[2,pcd_x2_closest_ind]}")
                     delta_x = pcd_x2[0,pcd_x2_closest_ind] - 0
                     delta_z = - (intercept - pcd_x2[2,pcd_x2_closest_ind]) 
                     theta = np.arctan2(delta_z, delta_x) /math.pi*180
-                    print(f"delta_x ={delta_x}")
-                    print(f"delta_z ={delta_z}")
-                    print(f"slope ={slope}")
-                    print(f"intercept ={intercept}")
-                    print(f"theta ={theta}")
+                    #print(f"delta_x ={delta_x}")
+                    #print(f"delta_z ={delta_z}")
+                    #print(f"slope ={slope}")
+                    #print(f"intercept ={intercept}")
+                    #print(f"theta ={theta}")
                     self.MID360_HIGHT = - intercept; #hight position[m]
                     self.THETA_INIT_Y = self.THETA_INIT_Y + theta #[deg]
                     self.initialize_calibration = 1
-                    print(f"self.MID360_HIGHT ={self.MID360_HIGHT}")
+                    #print(f"self.MID360_HIGHT ={self.MID360_HIGHT}")
                     
         
-        #add mid height position
+        # Add mid height position
         pointcloud_intensity[2,:] += self.MID360_HIGHT
         #print(f"pointcloud_intensity ={pointcloud_intensity.shape}")
         
-        #publish for rviz2
+        # Publish for rviz2
         if self.initialize_calibration == 1:
             self.pcd_rotation = point_cloud_intensity_msg(pointcloud_intensity.T, t_stamp, 'map')
             self.pcd_rotation_publisher.publish(self.pcd_rotation ) 

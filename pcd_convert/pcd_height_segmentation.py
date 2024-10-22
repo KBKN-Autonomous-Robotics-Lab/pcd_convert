@@ -40,23 +40,26 @@ class PcdHeightSegmentation(Node):
         self.pcd_segment_step_publisher = self.create_publisher(sensor_msgs.PointCloud2, 'pcd_segment_step', qos_profile) #set publish pcd topic name
         
         #パラメータ
-        #set obs range
+        # Set obs range
         self.OBS_HIGHT_MIN =   200/1000; #hight range[m]
         self.OBS_HIGHT_MAX =  3000/1000; #hight range[m]
         self.OBS_MASK_X_MIN = -500/1000; #x mask range[m]
         self.OBS_MASK_X_MAX =  200/1000; #x mask range[m]
         self.OBS_MASK_Y_MIN = -350/1000; #y mask range[m]
         self.OBS_MASK_Y_MAX =  350/1000; #y mask range[m]
-        #set ground range
+        # Set ground range
         self.GROUND_HIGHT_MIN = -150/1000; #hight range[m]
         self.GROUND_HIGHT_MAX =  150/1000; #hight range[m]
-        #set step range
+        # Set step range
         self.STEP_HIGHT_MIN =   100/1000; #hight range[m]
         self.STEP_HIGHT_MAX =   self.OBS_HIGHT_MIN# 200/1000; #hight range[m]
         self.STEP_X_MIN     = -2000/1000; #x mask range[m]
         self.STEP_X_MAX     =  5000/1000; #x mask range[m]
         self.STEP_Y_MIN     = -8000/1000; #y mask range[m]
         self.STEP_Y_MAX     =  8000/1000; #y mask range[m]
+        
+        self.get_logger().info("Start pcd_height_segmentation node")
+        self.get_logger().info("++++++++++++++++++++++++++++++++++")
         
     def pointcloud2_to_array(self, cloud_msg):
         # Extract point cloud data
@@ -68,40 +71,40 @@ class PcdHeightSegmentation(Node):
 
         # Combine into a 4xN matrix
         point_cloud_matrix = np.vstack((x, y, z, intensity))
-        print(point_cloud_matrix)
-        print(f"point_cloud_matrix ={point_cloud_matrix.shape}")
-        print(f"x ={x.dtype, x.shape}")
+        #print(point_cloud_matrix)
+        #print(f"point_cloud_matrix ={point_cloud_matrix.shape}")
+        #print(f"x ={x.dtype, x.shape}")
         
         return point_cloud_matrix
         
     def pcd_heigth_segmentation(self, msg):
         
-        #print stamp message
+        # Print stamp message
         t_stamp = msg.header.stamp
-        print(f"t_stamp ={t_stamp}")
+        #print(f"t_stamp ={t_stamp}")
         
-        #get pcd data
+        # Get pcd data
         points = self.pointcloud2_to_array(msg)
-        print(f"points ={points.shape}")
+        #print(f"points ={points.shape}")
         
-        #obs segment
+        # Obs segment
         pcd_obs_height = self.height_segment(points, self.OBS_HIGHT_MIN, self.OBS_HIGHT_MAX)
         pcd_obs = self.pcd_mask(pcd_obs_height, self.OBS_MASK_X_MIN, self.OBS_MASK_X_MAX, self.OBS_MASK_Y_MIN, self.OBS_MASK_Y_MAX)
-        print(f"pcd_obs_height ={pcd_obs_height.shape}")
-        print(f"pcd_obs ={pcd_obs.shape}")
+        #print(f"pcd_obs_height ={pcd_obs_height.shape}")
+        #print(f"pcd_obs ={pcd_obs.shape}")
         
-        #ground segment
+        # Ground segment
         pcd_ground = self.height_segment(points, self.GROUND_HIGHT_MIN, self.GROUND_HIGHT_MAX)
-        print(f"pcd_ground ={pcd_ground.shape}")
+        #print(f"pcd_ground ={pcd_ground.shape}")
         
-        #step segment
+        # Step segment
         pcd_step_height = self.height_segment(points, self.STEP_HIGHT_MIN, self.STEP_HIGHT_MAX)
         pcd_step_height_under = self.height_segment(points, -self.STEP_HIGHT_MAX, -self.STEP_HIGHT_MIN)
         pcd_step_height = np.insert(pcd_step_height, len(pcd_step_height[0,:]), pcd_step_height_under.T, axis=1)
         pcd_step = self.pcd_serch(pcd_step_height, self.STEP_X_MIN, self.STEP_X_MAX, self.STEP_Y_MIN, self.STEP_Y_MAX)
         #pcd_obs = np.insert(pcd_obs, len(pcd_obs[0,:]), pcd_step.T, axis=1)
         
-        #publish for rviz2
+        # Publish for rviz2
         self.pcd_segment_obs = point_cloud_intensity_msg(pcd_obs.T, t_stamp, 'map')
         self.pcd_segment_obs_publisher.publish(self.pcd_segment_obs ) 
         self.pcd_segment_ground = point_cloud_intensity_msg(pcd_ground.T, t_stamp, 'map')
